@@ -4,13 +4,13 @@
 #include <gps.h>
 #include <math.h>
 
-int main(){
+int getCoordinates(){
     int rc;
     struct gps_data_t gps;
 
     if((rc = gps_open("localhost", "2947", &gps)) == -1){
         printf("couldn't open\n");
-        return EXIT_FAILURE;
+        return 0;
     }
 
     gps_stream(&gps, WATCH_ENABLE | WATCH_JSON, NULL);
@@ -20,7 +20,7 @@ int main(){
         if (gps_waiting(&gps, 20000000)) {
             if (gps_read(&gps) == -1) {
                 printf("couldn't read\n");
-                return EXIT_FAILURE;
+                return 0;
             } else {
                 if ((gps.status == STATUS_FIX) &&
                     (gps.fix.mode == MODE_2D || gps.fix.mode == MODE_3D) &&
@@ -40,40 +40,43 @@ int main(){
 
     gps_stream(&gps, WATCH_DISABLE, NULL);
     gps_close(&gps);
+
+    return 1;
 }
 
-/*#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <gps.h>
+int getWireless(){
+    char sig[5];
+    int sigint, rc;
 
-int main(void){
+    FILE* pp = popen("cat /proc/net/wireless | grep wlp3s0", "r");
 
-   struct gps_data_t gps_data;
-   int ret = 0;
+    rc = fscanf(pp, "%*s %*s %*s %s", sig);
 
-   ret = gps_open("localhost", "5056", &gps_data);
+    if(rc==EOF) return(0);
 
-   gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
+    int i;
+    for(i = 0; sig[i] != '\0'; i++){
+        if(sig[i] == '.') sig[i] = '\0';
+    }
 
-   if (gps_waiting (&gps_data, 500)) {
+    sigint = atoi(sig);
+
+    pclose(pp);
+
+    return(sigint);
+}
+
+int main(){
+    int rc;
+
+    //rc = getCoordinates();
 
 
-       if (gps_read (&gps_data) == -1) {
+    while(1==1){
+        rc = getWireless();
+        fprintf(stdout, "%d\n", rc);
+        sleep(1);
+    }
 
-           fprintf(stdout, "Error #3: No GPS data available! Retrying ...\n");
 
-       }
-       else {
-
-           fprintf(stdout, "GPS-Data: Mode: %d, Latitude: %f, Longitude: %f, Altitude: %.1f, Timestamp: %ld\n", gps_data.fix.mode, gps_data.fix.latitude, gps_data.fix.longitude, gps_data.fix.altitude);
-
-       }
-   }
-
-   /* When you are done...
-   gps_stream(&gps_data, WATCH_DISABLE, NULL);
-   gps_close (&gps_data);
-
-   return 0;
-} */
+}
