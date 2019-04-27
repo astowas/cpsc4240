@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <gps.h>
+//#include <gps.h>
 #include <math.h>
 
-int getCoordinates(){
+
+// Never got posted gps code from dr. martin, couldnt get daemon to work on available computers in time
+/*int getCoordinates(){
     int rc;
     struct gps_data_t gps;
 
@@ -42,7 +44,7 @@ int getCoordinates(){
     gps_close(&gps);
 
     return 1;
-}
+}*/
 
 int getWireless(){
     char sig[5];
@@ -70,11 +72,16 @@ int main(){
     int rc;
 
     //rc = getCoordinates();
+    char* s;
+    fprintf(stdout, "Enter location ID: ");
+    fscanf(stdin, "%s", s);
 
+    FILE* fp = fopen("data.csv", "a");
 
     while(1==1){
         rc = getWireless();
-        fprintf(stdout, "%d\n", rc);
+        fprintf(fp, "%s,%d\n", s, rc);
+        fflush(fp);
         sleep(1);
     }
 
